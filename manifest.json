@@ -1,0 +1,9 @@
+{
+  "name": "Cifrados Ministerio de Alabanza",
+  "short_name": "Cifrados",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#1e1e1e",
+  "orientation": "portrait"
+}
