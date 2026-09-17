@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cifrados CFC Música</title>
+    <title>Cifrados CFC</title>
     <link rel="manifest" href="manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,7 +13,7 @@
         .right-controls { display: flex; gap: 8px; align-items: center; }
         .tone-selector, .scroll-selector { background: #2d2d2d; color: #03dac6; border: 1px solid #03dac6; padding: 8px 10px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; outline: none; }
         .btn-scroll { background: #03dac6; color: #000; border: none; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 14px; }
-        .btn-admin-lock { background: none; border: none; font-size: 18px; cursor: pointer; padding: 5px; margin-left: 5px; }
+        .btn-admin-lock { background: #2d2d2d; border: 1px solid #bb86fc; font-size: 16px; cursor: pointer; padding: 8px 12px; border-radius: 6px; font-weight: bold; color: #bb86fc; }
         .sidebar { position: fixed; top: 65px; left: -100%; width: 310px; height: calc(100dvh - 65px); background: #1e1e1e; border-right: 1px solid #333; padding: 15px; transition: left 0.3s ease; z-index: 90; display: flex; flex-direction: column; overscroll-behavior: contain; }
         .sidebar.active { left: 0; }
         body.menu-open { overflow: hidden; position: fixed; width: 100%; }
@@ -23,6 +23,9 @@
         .tab-btn.active { background: #03dac6; color: #000; }
         .tab-content { display: none; flex: 1; min-height: 0; }
         .tab-content.active { display: flex; flex-direction: column; }
+    </style>
+</head>
+<style>
         .search-box { width: 100%; padding: 10px; background: #2d2d2d; border: 1px solid #444; border-radius: 6px; color: #fff; font-size: 14px; margin-bottom: 12px; flex-shrink: 0; outline: none; }
         .search-box:focus { border-color: #bb86fc; }
         #repertoire-list, #setlist-container { flex: 1; overflow-y: auto; display: block; -webkit-overflow-scrolling: touch; padding-bottom: 30px; min-height: 0; }
@@ -63,15 +66,9 @@
         <button class="btn-menu" onclick="toggleMenu()">☰ Menú</button>
         <div class="right-controls">
             <button class="btn-scroll" id="scroll-btn" onclick="toggleScroll()" disabled>▶ Scroll</button>
-            <select class="scroll-selector" id="scroll-speed" disabled>
-                <option value="1">Vel: 1x</option>
-                <option value="2">Vel: 2x</option>
-                <option value="3">Vel: 3x</option>
-            </select>
-            <select class="tone-selector" id="tone-select" onchange="seleccionarTonoDirecto()" disabled>
-                <option value="0">Tono</option>
-            </select>
-            <button class="btn-admin-lock" id="lock-btn" onclick="solicitarAccesoAdmin()">⚙️</button>
+            <select class="scroll-selector" id="scroll-speed" disabled><option value="1">Vel: 1x</option><option value="2">Vel: 2x</option><option value="3">Vel: 3x</option></select>
+            <select class="tone-selector" id="tone-select" onchange="seleccionarTonoDirecto()" disabled><option value="0">Tono</option></select>
+            <button class="btn-admin-lock" id="lock-btn" onclick="solicitarAccesoAdmin()">⚙️ Login</button>
         </div>
     </div>
     <div class="sidebar" id="sidebar-menu">
@@ -84,267 +81,102 @@
             <input type="text" class="search-box" id="search-input" placeholder="🔍 Buscar canción..." oninput="filtrarCanciones()">
             <div id="repertoire-list"></div>
         </div>
-        <div class="tab-content" id="content-set">
-            <div id="setlist-container"></div>
-        </div>
+        <div class="tab-content" id="content-set"><div id="setlist-container"></div></div>
     </div>
-    <div class="main-viewer">
-        <div id="song-area">
-            <div class="empty-state">Toca el botón "☰ Menú" arriba a la izquierda y elige una canción para empezar.</div>
-        </div>
-    </div>
+    <div class="main-viewer"><div id="song-area"><div class="empty-state">Toca el botón "☰ Menú" arriba a la izquierda y elige una canción para empezar.</div></div></div>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDQyQEdqqaUoxEVN9gYlQuyEwUfwygrVfQ",
-  authDomain: "://firebaseapp.com",
-  projectId: "cfcmusica-68a1e",
-  storageBucket: "cfcmusica-68a1e.firebasestorage.app",
-  messagingSenderId: "708075658995",
-  appId: "1:708075658995:web:699bc229bc060f8dce2186"
-};
-
+const firebaseConfig = { apiKey: "AIzaSyDQyQEdqqaUoxEVN9gYlQuyEwUfwygrVfQ", authDomain: "://firebaseapp.com", projectId: "cfcmusica-68a1e", storageBucket: "cfcmusica-68a1e.firebasestorage.app", messagingSenderId: "708075658995", appId: "1:708075658995:web:699bc229bc060f8dce2186" };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
+const db = firebase.firestore(); const auth = firebase.auth();
 db.enablePersistence().catch((err) => console.log("Caché offline listo", err.code));
-
-const escala = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const bemoles = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
-
-let canciones = [];
-let cancionActual = null;
-let idEdicionActual = null;
-let semitonosActuales = 0;
-let setlistIds = [];
-let scrollIntervalo = null;
-let estaHaciendoScroll = false;
-let isAdminActual = false;
-
+const escala = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']; const bemoles = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
+let canciones = []; let cancionActual = null; let idEdicionActual = null; let semitonosActuales = 0; let setlistIds = []; let scrollIntervalo = null; let estaHaciendoScroll = false; let isAdminActual = false;
 auth.onAuthStateChanged((user) => {
-    if (user) {
-        isAdminActual = true;
-        document.body.classList.add('is-admin');
-        document.getElementById('lock-btn').innerText = "🔓";
-    } else {
-        isAdminActual = false;
-        document.body.classList.remove('is-admin');
-        document.getElementById('lock-btn').innerText = "⚙️";
-    }
+    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Admin"; } 
+    else { isAdminActual = false; document.body.classList.remove('is-admin'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
     if (cancionActual) renderizarCancion();
 });
-
 function solicitarAccesoAdmin() {
-    if (isAdminActual) {
-        auth.signOut().then(() => alert("Sesión de Editor cerrada."));
-    } else {
-        let correo = prompt("Ingresa tu correo de administrador de Firebase:");
-        if (!correo) return;
-        let clave = prompt("Ingresa tu contraseña:");
-        if (!clave) return;
-        auth.signInWithEmailAndPassword(correo, clave)
-            .then(() => alert("¡Modo Editor activado en la nube!"))
-            .catch((err) => alert("Error: " + err.message));
+    if (isAdminActual) { auth.signOut().then(() => alert("Sesión cerrada.")); } 
+    else {
+        let correo = prompt("Ingresa tu correo de administrador:"); if (!correo) return;
+        let clave = prompt("Ingresa tu contraseña:"); if (!clave) return;
+        auth.signInWithEmailAndPassword(correo, clave).then(() => alert("¡Modo Editor activo!")).catch((err) => alert("Error: " + err.message));
     }
 }
-function toggleMenu() { 
-    const sidebar = document.getElementById('sidebar-menu');
-    sidebar.classList.toggle('active');
-    document.body.classList.toggle('menu-open', sidebar.classList.contains('active'));
-}
+function toggleMenu() { const sidebar = document.getElementById('sidebar-menu'); sidebar.classList.toggle('active'); document.body.classList.toggle('menu-open', sidebar.classList.contains('active')); }
 function normalizarAcorde(acorde) { return bemoles[acorde] || acorde; }
 function cambiarPestaña(tipo) {
-    document.getElementById('tab-rep').classList.toggle('active', tipo === 'rep');
-    document.getElementById('tab-set').classList.toggle('active', tipo === 'set');
-    document.getElementById('content-rep').classList.toggle('active', tipo === 'rep');
-    document.getElementById('content-set').classList.toggle('active', tipo === 'set');
+    document.getElementById('tab-rep').classList.toggle('active', tipo === 'rep'); document.getElementById('tab-set').classList.toggle('active', tipo === 'set');
+    document.getElementById('content-rep').classList.toggle('active', tipo === 'rep'); document.getElementById('content-set').classList.toggle('active', tipo === 'set');
 }
-function transponerAcorde(acorde, semitonos) {
-    let limpio = normalizarAcorde(acorde);
-    let index = escala.indexOf(limpio);
-    if (index === -1) return acorde;
-    let nuevoIndex = (index + semitonos) % 12;
-    if (nuevoIndex < 0) nuevoIndex += 12;
-    return escala[nuevoIndex];
-}
+function transponerAcorde(acorde, semitonos) { let limpio = normalizarAcorde(acorde); let index = escala.indexOf(limpio); if (index === -1) return acorde; let nuevoIndex = (index + semitonos) % 12; if (nuevoIndex < 0) nuevoIndex += 12; return escala[nuevoIndex]; }
 function cargarCancion(id) {
-    detenerScroll();
-    cancionActual = canciones.find(c => c.id === id);
-    if (!cancionActual) { cancelarFormulario(); return; }
-    semitonosActuales = 0;
-    document.getElementById('scroll-btn').disabled = false;
-    document.getElementById('scroll-speed').disabled = false;
-    const selector = document.getElementById('tone-select');
-    selector.disabled = false;
-    selector.innerHTML = '';
+    detenerScroll(); cancionActual = canciones.find(c => c.id === id); if (!cancionActual) { cancelarFormulario(); return; } semitonosActuales = 0;
+    document.getElementById('scroll-btn').disabled = false; document.getElementById('scroll-speed').disabled = false;
+    const selector = document.getElementById('tone-select'); selector.disabled = false; selector.innerHTML = '';
     let indexOriginal = escala.indexOf(normalizarAcorde(cancionActual.tonoOriginal));
-    for (let i = 0; i < 12; i++) {
-        let notaCandidata = escala[(indexOriginal + i) % 12];
-        let option = document.createElement('option');
-        option.value = i;
-        option.text = i === 0 ? `Tono: ${notaCandidata} (Orig)` : `Tono: ${notaCandidata}`;
-        selector.appendChild(option);
-    }
-    renderizarCancion();
-    document.getElementById('sidebar-menu').classList.remove('active');
-    document.body.classList.remove('menu-open');
-}
-function seleccionarTonoDirecto() {
-    if (!cancionActual) return;
-    semitonosActuales = parseInt(document.getElementById('tone-select').value);
+    for (let i = 0; i < 12; i++) { let notaCandidata = escala[(indexOriginal + i) % 12]; let option = document.createElement('option'); option.value = i; option.text = i === 0 ? `Tono: ${notaCandidata} (Orig)` : `Tono: ${notaCandidata}`; selector.appendChild(option); }
     renderizarCancion();
 }
+function seleccionarTonoDirecto() { if (!cancionActual) return; semitonosActuales = parseInt(document.getElementById('tone-select').value); renderizarCancion(); }
 function renderizarCancion() {
-    if (!cancionActual) return;
-    let lineasOriginales = cancionActual.letra.split('\n');
-    let htmlResultado = "";
+    if (!cancionActual) return; let lineasOriginales = cancionActual.letra.split('\n'); let htmlResultado = "";
     lineasOriginales.forEach(linea => {
-        let lineaAcordes = "";
-        let posicionLetraEfectiva = 0;
-        let regex = /\[([^\]]+)\]/g;
-        let coincidencia;
-        let ultimoIndiceProcesado = 0;
+        let lineaAcordes = ""; let posicionLetraEfectiva = 0; let regex = /\[([^\]]+)\]/g; let coincidencia; let ultimoIndiceProcesado = 0;
         while ((coincidencia = regex.exec(linea)) !== null) {
-            let acorde = coincidencia[1];
-            let indiceEnTextoConCorchetes = coincidencia.index;
-            let fragmentoPrevio = linea.substring(ultimoIndiceProcesado, indiceEnTextoConCorchetes);
-            fragmentoPrevio = fragmentoPrevio.replace(/\[[^\]]+\]/g, '');
-            posicionLetraEfectiva += fragmentoPrevio.length;
-            let acordeTranspuesto = transponerAcorde(acorde, semitonosActuales);
-            while (lineaAcordes.length < posicionLetraEfectiva) {
-                lineaAcordes += " ";
-            }
-            lineaAcordes += acordeTranspuesto;
-            ultimoIndiceProcesado = indiceEnTextoConCorchetes;
+            let acorde = coincidencia[1]; let indiceEnTextoConCorchetes = coincidencia.index;
+            let fragmentoPrevio = linea.substring(ultimoIndiceProcesado, indiceEnTextoConCorchetes).replace(/\[[^\]]+\]/g, '');
+            posicionLetraEfectiva += fragmentoPrevio.length; let acordeTranspuesto = transponerAcorde(acorde, semitonosActuales);
+            while (lineaAcordes.length < posicionLetraEfectiva) { lineaAcordes += " "; }
+            lineaAcordes += acordeTranspuesto; ultimoIndiceProcesado = indiceEnTextoConCorchetes;
         }
         let lineaLetra = linea.replace(/\[[^\]]+\]/g, '');
-        if (lineaLetra.trim() === "" && lineaAcordes.trim() === "") {
-            htmlResultado += "\n";
-        } else {
-            htmlResultado += `<span class="chord-line">${lineaAcordes}</span>`;
-            htmlResultado += `<span class="lyric-line">${lineaLetra}</span>`;
-        }
+        if (lineaLetra.trim() === "" && lineaAcordes.trim() === "") { htmlResultado += "\n"; } 
+        else { htmlResultado += `<span class="chord-line">${lineaAcordes}</span><span class="lyric-line">${lineaLetra}</span>`; }
     });
-    document.getElementById('song-area').innerHTML = `
-        <div class="song-header-actions">
-            <div class="song-title">${cancionActual.titulo}</div>
-            <div class="action-tool-buttons">
-                <button class="btn-tool btn-edit" onclick="iniciarEdicion()">✏️ Editar</button>
-                <button class="btn-tool btn-delete-song" onclick="eliminarCancionActual()">🗑️ Borrar</button>
-                <button class="btn-close-view" onclick="cerrarVisorCancion()">✕</button>
-            </div>
-        </div>
-        <div class="song-body">${htmlResultado}</div>`;
+    document.getElementById('song-area').innerHTML = `<div class="song-header-actions"><div class="song-title">${cancionActual.titulo}</div><div class="action-tool-buttons"><button class="btn-tool btn-edit" onclick="iniciarEdicion()">✏️ Editar</button><button class="btn-tool btn-delete-song" onclick="eliminarCancionActual()">🗑️ Borrar</button><button class="btn-close-view" onclick="cerrarVisorCancion()">✕</button></div></div><div class="song-body">${htmlResultado}</div>`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function cerrarVisorCancion() {
-    detenerScroll();
-    cancionActual = null;
-    document.getElementById('scroll-btn').disabled = true;
-    document.getElementById('scroll-speed').disabled = true;
-    document.getElementById('tone-select').disabled = true;
-    document.getElementById('tone-select').innerHTML = '<option value="0">Tono</option>';
-    cancelarFormulario();
-}
+function cerrarVisorCancion() { detenerScroll(); cancionActual = null; document.getElementById('scroll-btn').disabled = true; document.getElementById('scroll-speed').disabled = true; document.getElementById('tone-select').disabled = true; document.getElementById('tone-select').innerHTML = '<option value="0">Tono</option>'; cancelarFormulario(); }
 function toggleScroll() { if (estaHaciendoScroll) { detenerScroll(); } else { iniciarScroll(); } }
-function iniciarScroll() {
-    estaHaciendoScroll = true;
-    document.getElementById('scroll-btn').innerText = "⏸ Pausa";
-    document.getElementById('scroll-btn').style.background = "#ffb74d";
-    const velocidad = parseInt(document.getElementById('scroll-speed').value);
-    let tiempoIntervalo = 60 / velocidad;
-    scrollIntervalo = setInterval(() => { window.scrollBy(0, 1); if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) { detenerScroll(); } }, tiempoIntervalo);
-}
+function iniciarScroll() { estaHaciendoScroll = true; document.getElementById('scroll-btn').innerText = "⏸ Pausa"; document.getElementById('scroll-btn').style.background = "#ffb74d"; const velocidad = parseInt(document.getElementById('scroll-speed').value); let tiempoIntervalo = 60 / velocidad; scrollIntervalo = setInterval(() => { window.scrollBy(0, 1); if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) { detenerScroll(); } }, tiempoIntervalo); }
 function detenerScroll() { estaHaciendoScroll = false; clearInterval(scrollIntervalo); document.getElementById('scroll-btn').innerText = "▶ Scroll"; document.getElementById('scroll-btn').style.background = "#03dac6"; }
 function mostrarFormulario() { idEdicionActual = null; abrirInterfazFormulario("", "C", ""); }
 function iniciarEdicion() { if (!cancionActual) return; idEdicionActual = cancionActual.id; abrirInterfazFormulario(cancionActual.titulo, cancionActual.tonoOriginal, cancionActual.letra); }
 function abrirInterfazFormulario(titulo, tono, letra) {
-    detenerScroll();
-    document.getElementById('tone-select').disabled = true;
-    document.getElementById('scroll-btn').disabled = true;
-    document.getElementById('scroll-speed').disabled = true;
-    document.getElementById('song-area').innerHTML = `
-        <div class="form-container">
-            <h3 style="margin-bottom:15px; color:#bb86fc;">${idEdicionActual ? '✏️ Editar' : '➕ Nueva'}</h3>
-            <div class="form-group"><label>Título</label><input type="text" id="form-titulo" value="${titulo}"></div>
-            <div class="form-group"><label>Tono</label><select id="form-tono">${escala.map(n => `<option value="\${n}" n===tono?'selected':''>{n}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Letra [Acordes]</label><textarea id="form-letra" rows="10">${letra}</textarea></div>
-            <div class="form-actions"><button class="btn-save" onclick="guardarNuevaCancion()">Guardar</button><button class="btn-cancel" onclick="cancelarFormulario()">Cancelar</button></div>
-        </div>`;
-    document.getElementById('sidebar-menu').classList.remove('active');
-    document.body.classList.remove('menu-open');
+    detenerScroll(); document.getElementById('tone-select').disabled = true; document.getElementById('scroll-btn').disabled = true; document.getElementById('scroll-speed').disabled = true;
+    let opcionesTono = escala.map(n => `<option value="${n}" ${n===tono?'selected':''}>${n}</option>`).join('');
+    document.getElementById('song-area').innerHTML = `<div class="form-container"><h3 style="margin-bottom:15px; color:#bb86fc;">\${idEdicionActual ? '✏️ Editar' : '➕ Nueva'}</h3><div class="form-group"><label>Título</label><input type="text" id="form-titulo" value="${titulo}"></div><div class="form-group"><label>Tono</label><select id="form-tono">${opcionesTono}</select></div><div class="form-group"><label>Letra [Acordes]</label><textarea id="form-letra" rows="10">${letra}</textarea></div><div class="form-actions"><button class="btn-save" onclick="guardarNuevaCancion()">Guardar</button><button class="btn-cancel" onclick="cancelarFormulario()">Cancelar</button></div></div>`;
+    document.getElementById('sidebar-menu').classList.remove('active'); document.body.classList.remove('menu-open');
 }
 function guardarNuevaCancion() {
-    const titulo = document.getElementById('form-titulo').value.trim();
-    const tonoOriginal = document.getElementById('form-tono').value;
-    const letra = document.getElementById('form-letra').value;
-    if (!titulo || !letra) { alert("Completa los datos."); return; }
-    const datosCancion = { titulo, tonoOriginal, letra };
-    if (idEdicionActual) {
-        db.collection("canciones").doc(idEdicionActual).update(datosCancion)
-            .then(() => { alert("¡Canción actualizada!"); idEdicionActual = null; cerrarVisorCancion(); })
-            .catch(err => alert("Error: " + err.message));
-    } else {
-        const idGenerado = "c_" + Date.now();
-        db.collection("canciones").doc(idGenerado).set(datosCancion)
-            .then(() => { alert("¡Canción subida!"); cerrarVisorCancion(); })
-            .catch(err => alert("Error: " + err.message));
-    }
+    const titulo = document.getElementById('form-titulo').value.trim(); const tonoOriginal = document.getElementById('form-tono').value; const letra = document.getElementById('form-letra').value;
+    if (!titulo || !letra) { alert("Completa los datos."); return; } const datosCancion = { titulo, tonoOriginal, letra };
+    if (idEdicionActual) { db.collection("canciones").doc(idEdicionActual).update(datosCancion).then(() => { alert("¡Actualizada!"); idEdicionActual = null; cerrarVisorCancion(); }).catch(err => alert("Error: " + err.message)); } 
+    else { const idGenerado = "c_" + Date.now(); db.collection("canciones").doc(idGenerado).set(datosCancion).then(() => { alert("¡Subida!"); cerrarVisorCancion(); }).catch(err => alert("Error: " + err.message)); }
 }
 function eliminarCancionActual() {
     if (!cancionActual) return;
-    if (confirm(`¿Eliminar por completo "${cancionActual.titulo}"?`)) {
-        db.collection("setlists").doc("domingo").get().then((doc) => {
-            if(doc.exists) {
-                let activos = doc.data().ids || [];
-                activos = activos.filter(sid => sid !== cancionActual.id);
-                db.collection("setlists").doc("domingo").set({ ids: activos });
-            }
-        });
-        db.collection("canciones").doc(cancionActual.id).delete()
-            .then(() => { alert("Eliminada."); cerrarVisorCancion(); })
-            .catch(err => alert("Error: " + err.message));
+    if (confirm(`¿Eliminar "${cancionActual.titulo}"?`)) {
+        db.collection("setlists").doc("domingo").get().then((doc) => { if(doc.exists) { let activos = doc.data().ids || []; activos = activos.filter(sid => sid !== cancionActual.id); db.collection("setlists").doc("domingo").set({ ids: activos }); } });
+        db.collection("canciones").doc(cancionActual.id).delete().then(() => { alert("Eliminada."); cerrarVisorCancion(); }).catch(err => alert("Error: " + err.message));
     }
 }
 function cancelarFormulario() { document.getElementById('song-area').innerHTML = `<div class="empty-state">Toca el botón "☰ Menú" y elige una canción para empezar.</div>`; }
 function agregarAlSetlist(id, e) { e.stopPropagation(); if (!setlistIds.includes(id)) { setlistIds.push(id); db.collection("setlists").doc("domingo").set({ ids: setlistIds }); } }
 function quitarDelSetlist(id, e) { e.stopPropagation(); setlistIds = setlistIds.filter(sid => sid !== id); db.collection("setlists").doc("domingo").set({ ids: setlistIds }); }
 function filtrarCanciones() {
-    const textoBusqueda = document.getElementById('search-input').value.toLowerCase();
-    const cancionesFiltradas = canciones.filter(c => c.titulo.toLowerCase().includes(textoBusqueda));
-    document.getElementById('repertoire-list').innerHTML = cancionesFiltradas.map(c => `
-        <div class="song-item" onclick="cargarCancion('${c.id}')"><span>${c.titulo} (${c.tonoOriginal})</span><button class="btn-add-set" onclick="agregarAlSetlist('${c.id}, event)">+ Set</button></div>
-    `).join('');
+    const textoBusqueda = document.getElementById('search-input').value.toLowerCase(); const cancionesFiltradas = canciones.filter(c => c.titulo.toLowerCase().includes(textoBusqueda));
+    document.getElementById('repertoire-list').innerHTML = cancionesFiltradas.map(c => `<div class="song-item" onclick="cargarCancion('${c.id}')"><span>${c.titulo} (${c.tonoOriginal})</span><button class="btn-add-set" onclick="agregarAlSetlist('${c.id}, event)">+ Set</button></div>`).join('');
 }
 function renderSetlistUI() {
     const setDiv = document.getElementById('setlist-container');
-    if (setlistIds.length === 0) {
-        setDiv.innerHTML = '<p style="font-size:13px; color:#666; text-align:center; padding:20px;">No hay canciones seleccionadas</p>';
-    } else {
-        setDiv.innerHTML = setlistIds.map(sid => {
-            const cancion = canciones.find(c => c.id === sid);
-            if (!cancion) return '';
-            return `<div class="setlist-item" onclick="cargarCancion('${cancion.id}')"><span>${cancion.titulo}</span><button class="btn-remove" onclick="quitarDelSetlist('${cancion.id}, event)">✕</button></div>`;
-        }).join('');
-    }
+    if (setlistIds.length === 0) { setDiv.innerHTML = '<p style="font-size:13px; color:#666; text-align:center; padding:20px;">No hay canciones seleccionadas</p>'; } 
+    else { setDiv.innerHTML = setlistIds.map(sid => { const cancion = canciones.find(c => c.id === sid); if (!cancion) return ''; return `<div class="setlist-item" onclick="cargarCancion('${cancion.id}')"><span>${cancion.titulo}</span><button class="btn-remove" onclick="quitarDelSetlist('${cancion.id}, event)">✕</button></div>`; }).join(''); }
 }
-db.collection("canciones").onSnapshot((snapshot) => {
-    canciones = [];
-    snapshot.forEach((doc) => {
-        let datos = doc.data();
-        canciones.push({ id: doc.id, titulo: datos.titulo, tonoOriginal: datos.tonoOriginal, letra: datos.letra });
-    });
-    filtrarCanciones();
-    renderSetlistUI();
-    if (cancionActual) {
-        let actualizada = canciones.find(c => c.id === cancionActual.id);
-        if (actualizada) { cancionActual = actualizada; renderizarCancion(); }
-    }
-});
-db.collection("setlists").doc("domingo").onSnapshot((doc) => {
-    if (doc.exists) { setlistIds = doc.data().ids || []; } else { setlistIds = []; }
-    renderSetlistUI();
-});
+db.collection("canciones").onSnapshot((snapshot) => { canciones = []; snapshot.forEach((doc) => { let datos = doc.data(); canciones.push({ id: doc.id, titulo: datos.titulo, tonoOriginal: datos.tonoOriginal, letra: datos.letra }); }); filtrarCanciones(); renderSetlistUI(); if (cancionActual) { let actualizada = canciones.find(c => c.id === cancionActual.id); if (actualizada) { cancionActual = actualizada; renderizarCancion(); } } });
+db.collection("setlists").doc("domingo").onSnapshot((doc) => { if (doc.exists) { setlistIds = doc.data().ids || []; } else { setlistIds = []; } renderSetlistUI(); });
 if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 </script>
 </body>
