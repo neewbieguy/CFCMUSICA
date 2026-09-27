@@ -8,12 +8,12 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #121212; color: #e0e0e0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
-        .top-bar { position: sticky; top: 0; background: #1e1e1e; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.4); height: 65px; }
+        .top-bar { position: sticky; top: 0; background: #1e1e1e; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; z-index: 100; height: 65px; }
         .btn-menu { background: #bb86fc; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 14px; }
         .right-controls { display: flex; gap: 8px; align-items: center; }
         .tone-selector, .scroll-selector { background: #2d2d2d; color: #03dac6; border: 1px solid #03dac6; padding: 8px 10px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; outline: none; }
         .btn-scroll { background: #03dac6; color: #000; border: none; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 14px; }
-        .btn-admin-lock { background: #2d2d2d; border: 1px solid #bb86fc; font-size: 16px; cursor: pointer; padding: 8px 12px; border-radius: 6px; font-weight: bold; color: #bb86fc; }
+        .btn-admin-lock { background: #2d2d2d; border: 1px solid #bb86fc; font-size: 15px; cursor: pointer; padding: 8px 12px; border-radius: 6px; font-weight: bold; color: #bb86fc; }
         .sidebar { position: fixed; top: 65px; left: -100%; width: 310px; height: calc(100dvh - 65px); background: #1e1e1e; border-right: 1px solid #333; padding: 15px; transition: left 0.3s ease; z-index: 90; display: flex; flex-direction: column; overscroll-behavior: contain; }
         .sidebar.active { left: 0; }
         body.menu-open { overflow: hidden; position: fixed; width: 100%; }
@@ -23,17 +23,12 @@
         .tab-btn.active { background: #03dac6; color: #000; }
         .tab-content { display: none; flex: 1; min-height: 0; }
         .tab-content.active { display: flex; flex-direction: column; }
-    </style>
-</head>
-<style>
         .search-box { width: 100%; padding: 10px; background: #2d2d2d; border: 1px solid #444; border-radius: 6px; color: #fff; font-size: 14px; margin-bottom: 12px; flex-shrink: 0; outline: none; }
-        .search-box:focus { border-color: #bb86fc; }
         #repertoire-list, #setlist-container { flex: 1; overflow-y: auto; display: block; -webkit-overflow-scrolling: touch; padding-bottom: 30px; min-height: 0; }
         .song-item { padding: 12px; background: #2d2d2d; margin-bottom: 8px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 15px; width: 100%; }
-        .song-item:hover { background: #3d3d3d; }
-        .btn-add-set { background: #03dac6; color: #000; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; flex-shrink: 0; margin-left: 10px; }
-        .setlist-item { padding: 12px; background: #1f3a3a; margin-bottom: 8px; border-radius: 6px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; width: 100%; }
-        .btn-remove { background: #cf6679; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; flex-shrink: 0; margin-left: 10px; }
+        .btn-add-set { background: #03dac6; color: #000; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; flex-shrink: 0; }
+        .setlist-item { padding: 12px; background: #1f3a3a; margin-bottom: 8px; border-radius: 6px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .btn-remove { background: #cf6679; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px; }
         .main-viewer { flex: 1; padding: 25px 20px 120px 20px; max-width: 750px; margin: 0 auto; width: 100%; }
         .song-header-actions { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d2d; padding-bottom: 10px; margin-bottom: 20px; gap: 15px; }
         .song-title { font-size: 24px; color: #bb86fc; text-align: left; }
@@ -91,6 +86,7 @@ const db = firebase.firestore(); const auth = firebase.auth();
 db.enablePersistence().catch((err) => console.log("Caché offline listo", err.code));
 const escala = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']; const bemoles = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
 let canciones = []; let cancionActual = null; let idEdicionActual = null; let semitonosActuales = 0; let setlistIds = []; let scrollIntervalo = null; let estaHaciendoScroll = false; let isAdminActual = false;
+
 auth.onAuthStateChanged((user) => {
     if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Admin"; } 
     else { isAdminActual = false; document.body.classList.remove('is-admin'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
@@ -100,7 +96,7 @@ function solicitarAccesoAdmin() {
     if (isAdminActual) { auth.signOut().then(() => alert("Sesión cerrada.")); } 
     else {
         let correo = prompt("Ingresa tu correo de administrador:"); if (!correo) return;
-        let clave = prompt("Ingresa tu contraseña:"); if (!clave) return;
+        let clave = prompt("Ingresa tu contraseña:"); if (!correo) return;
         auth.signInWithEmailAndPassword(correo, clave).then(() => alert("¡Modo Editor activo!")).catch((err) => alert("Error: " + err.message));
     }
 }
