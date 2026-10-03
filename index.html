@@ -106,8 +106,6 @@ function cambiarPestaña(tipo) {
     document.getElementById('content-rep').classList.toggle('active', tipo === 'rep'); document.getElementById('content-set').classList.toggle('active', tipo === 'set');
 }
 function transponerAcorde(acorde, semitonos) { let limpio = normalizarAcorde(acorde); let index = escala.indexOf(limpio); if (index === -1) return acorde; let nuevoIndex = (index + semitonos) % 12; if (nuevoIndex < 0) nuevoIndex += 12; return escala[nuevoIndex]; }
-</script>
-<script>
 function cargarCancion(id) {
     detenerScroll(); cancionActual = canciones.find(c => c.id === id); if (!cancionActual) { cancelarFormulario(); return; } semitonosActuales = 0;
     document.getElementById('scroll-btn').disabled = false; document.getElementById('scroll-speed').disabled = false;
@@ -141,8 +139,6 @@ function iniciarScroll() { estaHaciendoScroll = true; document.getElementById('s
 function detenerScroll() { estaHaciendoScroll = false; clearInterval(scrollIntervalo); document.getElementById('scroll-btn').innerText = "▶ Scroll"; document.getElementById('scroll-btn').style.background = "#03dac6"; }
 function mostrarFormulario() { idEdicionActual = null; abrirInterfazFormulario("", "C", ""); }
 function iniciarEdicion() { if (!cancionActual) return; idEdicionActual = cancionActual.id; abrirInterfazFormulario(cancionActual.titulo, cancionActual.tonoOriginal, cancionActual.letra); }
-</script>
-<script>
 function abrirInterfazFormulario(titulo, tono, letra) {
     detenerScroll(); document.getElementById('tone-select').disabled = true; document.getElementById('scroll-btn').disabled = true; document.getElementById('scroll-speed').disabled = true;
     var textoHeader = "➕ Nueva Canción"; if (idEdicionActual) { textoHeader = "✏️ Editar Canción"; }
