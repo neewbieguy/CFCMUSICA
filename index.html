@@ -80,40 +80,25 @@
     </div>
     <div class="main-viewer"><div id="song-area"><div class="empty-state">Toca el botón "☰ Menú" arriba a la izquierda y elige una canción para empezar.</div></div></div>
 <script>
-const firebaseConfig = { 
-  apiKey: "AIzaSyDQyQEdqqaUoxEVN9gYlQuyEwUfwygrVfQ", 
-  authDomain: "://firebaseapp.com", 
-  projectId: "cfcmusica-68a1e", 
-  storageBucket: "cfcmusica-68a1e.firebasestorage.app", 
-  messagingSenderId: "708075658995", 
-  appId: "1:708075658995:web:699bc229bc060f8dce2186" 
-};
-
+const firebaseConfig = { apiKey: "AIzaSyDQyQEdqqaUoxEVN9gYlQuyEwUfwygrVfQ", authDomain: "://firebaseapp.com", projectId: "cfcmusica-68a1e", storageBucket: "cfcmusica-68a1e.firebasestorage.app", messagingSenderId: "708075658995", appId: "1:708075658995:web:699bc229bc060f8dce2186" };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore(); const auth = firebase.auth();
 db.enablePersistence().catch((err) => console.log("Caché offline listo", err.code));
 const escala = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']; const bemoles = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
 let canciones = []; let cancionActual = null; let idEdicionActual = null; let semitonosActuales = 0; let setlistIds = []; let scrollIntervalo = null; let estaHaciendoScroll = false; let isAdminActual = false;
+
 auth.onAuthStateChanged((user) => {
     if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Admin"; } 
     else { isAdminActual = false; document.body.classList.remove('is-admin'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
     if (cancionActual) renderizarCancion();
 });
 function solicitarAccesoAdmin() {
-    if (isAdminActual) { 
-        auth.signOut().then(function() { alert("Sesión cerrada."); }); 
-    } else {
-        let correo = prompt("Ingresa tu correo de administrador:"); 
-        if (!correo) return;
-        let clave = prompt("Ingresa tu contraseña:"); 
-        if (!clave) return;
-        
-        auth.signInWithEmailAndPassword(correo, clave)
-            .then(function() { alert("¡Modo Editor activo!"); })
-            .catch(function(err) { alert("Error: " + err.message); });
+    if (isAdminActual) { auth.signOut().then(() => alert("Sesión cerrada.")); } 
+    else {
+        let correo = prompt("Ingresa tu correo de administrador:"); if (!correo) return;
+        let clave = prompt("Ingresa tu contraseña:"); if (!clave) return;
+        auth.signInWithEmailAndPassword(correo, clave).then(() => alert("¡Modo Editor activo!")).catch((err) => alert("Error: " + err.message));
     }
-}
-
 }
 function toggleMenu() { const sidebar = document.getElementById('sidebar-menu'); sidebar.classList.toggle('active'); document.body.classList.toggle('menu-open', sidebar.classList.contains('active')); }
 function normalizarAcorde(acorde) { return bemoles[acorde] || acorde; }
@@ -154,7 +139,7 @@ function toggleScroll() { if (estaHaciendoScroll) { detenerScroll(); } else { in
 function iniciarScroll() { estaHaciendoScroll = true; document.getElementById('scroll-btn').innerText = "⏸ Pausa"; document.getElementById('scroll-btn').style.background = "#ffb74d"; const velocidad = parseInt(document.getElementById('scroll-speed').value); let tiempoIntervalo = 60 / velocidad; scrollIntervalo = setInterval(() => { window.scrollBy(0, 1); if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) { detenerScroll(); } }, tiempoIntervalo); }
 function detenerScroll() { estaHaciendoScroll = false; clearInterval(scrollIntervalo); document.getElementById('scroll-btn').innerText = "▶ Scroll"; document.getElementById('scroll-btn').style.background = "#03dac6"; }
 function mostrarFormulario() { idEdicionActual = null; abrirInterfazFormulario("", "C", ""); }
-function iniciarEdicion() { if (!cancionActual) return; idEdicionActual = cancionActual.id; abrirInterfazFormulario(cancionActual.titulo, cancionActual.tonoOriginal, cancionActual.letra); }
+function iniciarEdicion() { if (!cancionActual) return; idEdicionActual = cancionActual.id; abrirInterfazFormulario(cancionActual.titulo, cancionOriginal, cancionActual.letra); }
 function abrirInterfazFormulario(titulo, tono, letra) {
     detenerScroll(); document.getElementById('tone-select').disabled = true; document.getElementById('scroll-btn').disabled = true; document.getElementById('scroll-speed').disabled = true;
     var textoHeader = "➕ Nueva Canción"; if (idEdicionActual) { textoHeader = "✏️ Editar Canción"; }
