@@ -100,12 +100,20 @@ auth.onAuthStateChanged((user) => {
     if (cancionActual) renderizarCancion();
 });
 function solicitarAccesoAdmin() {
-    if (isAdminActual) { auth.signOut().then(() => alert("Sesión cerrada.")); } 
-    else {
-        let correo = prompt("Ingresa tu correo de administrador:"); if (!correo) return;
-        let clave = prompt("Ingresa tu contraseña:"); if (!clave) return;
-        auth.signInWithEmailAndPassword(correo, clave).then(() => alert("¡Modo Editor activo!")).catch((err) => alert("Error: " + err.message));
+    if (isAdminActual) { 
+        auth.signOut().then(function() { alert("Sesión cerrada."); }); 
+    } else {
+        let correo = prompt("Ingresa tu correo de administrador:"); 
+        if (!correo) return;
+        let clave = prompt("Ingresa tu contraseña:"); 
+        if (!clave) return;
+        
+        auth.signInWithEmailAndPassword(correo, clave)
+            .then(function() { alert("¡Modo Editor activo!"); })
+            .catch(function(err) { alert("Error: " + err.message); });
     }
+}
+
 }
 function toggleMenu() { const sidebar = document.getElementById('sidebar-menu'); sidebar.classList.toggle('active'); document.body.classList.toggle('menu-open', sidebar.classList.contains('active')); }
 function normalizarAcorde(acorde) { return bemoles[acorde] || acorde; }
