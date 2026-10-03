@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cifrados CFC</title>
     <link rel="manifest" href="manifest.json">
+    
+    <!-- ENLACES OFICIALES DE GOOGLE FIREBASE CORE -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #121212; color: #e0e0e0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
@@ -80,23 +83,45 @@
     </div>
     <div class="main-viewer"><div id="song-area"><div class="empty-state">Toca el botón "☰ Menú" arriba a la izquierda y elige una canción para empezar.</div></div></div>
 <script>
-const firebaseConfig = { apiKey: "AIzaSyDQyQEdqqaUoxEVN9gYlQuyEwUfwygrVfQ", authDomain: "://firebaseapp.com", projectId: "cfcmusica-68a1e", storageBucket: "cfcmusica-68a1e.firebasestorage.app", messagingSenderId: "708075658995", appId: "1:708075658995:web:699bc229bc060f8dce2186" };
+// ENCHUFE DIRECTO REPARADO A TU NUBE DE FIREBASE (cfcmusica-68a1e)
+const firebaseConfig = { 
+  apiKey: "AIzaSyDQyQEdqqaUoxEVN9gYlQuyEwUfwygrVfQ", 
+  authDomain: "://firebaseapp.com", 
+  projectId: "cfcmusica-68a1e", 
+  storageBucket: "cfcmusica-68a1e.firebasestorage.app", 
+  messagingSenderId: "708075658995", 
+  appId: "1:708075658995:web:699bc229bc060f8dce2186" 
+};
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore(); const auth = firebase.auth();
-db.enablePersistence().catch((err) => console.log("Caché offline listo", err.code));
-const escala = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']; const bemoles = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
+
+const escala = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']; 
+const bemoles = {'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'};
 let canciones = []; let cancionActual = null; let idEdicionActual = null; let semitonosActuales = 0; let setlistIds = []; let scrollIntervalo = null; let estaHaciendoScroll = false; let isAdminActual = false;
-auth.onAuthStateChanged((user) => {
-    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Admin"; } 
-    else { isAdminActual = false; document.body.classList.remove('is-admin'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
+
+auth.onAuthStateChanged(function(user) {
+    if (user) { 
+        isAdminActual = true; 
+        document.body.classList.add('is-admin'); 
+        document.getElementById('lock-btn').innerText = "🔓 Admin"; 
+    } else { 
+        isAdminActual = false; 
+        document.body.classList.remove('is-admin'); 
+        document.getElementById('lock-btn').innerText = "⚙️ Login"; 
+    }
     if (cancionActual) renderizarCancion();
 });
+
 function solicitarAccesoAdmin() {
-    if (isAdminActual) { auth.signOut().then(() => alert("Sesión cerrada.")); } 
-    else {
+    if (isAdminActual) { 
+        auth.signOut().then(function() { alert("Sesión cerrada."); }); 
+    } else {
         let correo = prompt("Ingresa tu correo de administrador:"); if (!correo) return;
         let clave = prompt("Ingresa tu contraseña:"); if (!clave) return;
-        auth.signInWithEmailAndPassword(correo, clave).then(() => alert("¡Modo Editor activo!")).catch((err) => alert("Error: " + err.message));
+        auth.signInWithEmailAndPassword(correo, clave)
+            .then(function() { alert("¡Modo Editor activo en la nube!"); })
+            .catch(function(err) { alert("Error: " + err.message); });
     }
 }
 function toggleMenu() { const sidebar = document.getElementById('sidebar-menu'); sidebar.classList.toggle('active'); document.body.classList.toggle('menu-open', sidebar.classList.contains('active')); }
@@ -107,7 +132,7 @@ function cambiarPestaña(tipo) {
 }
 function transponerAcorde(acorde, semitonos) { let limpio = normalizarAcorde(acorde); let index = escala.indexOf(limpio); if (index === -1) return acorde; let nuevoIndex = (index + semitonos) % 12; if (nuevoIndex < 0) nuevoIndex += 12; return escala[nuevoIndex]; }
 function cargarCancion(id) {
-    detenerScroll(); cancionActual = canciones.find(c => c.id === id); if (!cancionActual) { cancelarFormulario(); return; } semitonosActuales = 0;
+    detenerScroll(); cancionActual = canciones.find(function(c) { return c.id === id; }); if (!cancionActual) { cancelarFormulario(); return; } semitonosActuales = 0;
     document.getElementById('scroll-btn').disabled = false; document.getElementById('scroll-speed').disabled = false;
     const selector = document.getElementById('tone-select'); selector.disabled = false; selector.innerHTML = '';
     let indexOriginal = escala.indexOf(normalizarAcorde(cancionActual.tonoOriginal));
@@ -117,10 +142,10 @@ function cargarCancion(id) {
 function seleccionarTonoDirecto() { if (!cancionActual) return; semitonosActuales = parseInt(document.getElementById('tone-select').value); renderizarCancion(); }
 function renderizarCancion() {
     if (!cancionActual) return; let lineasOriginales = cancionActual.letra.split('\n'); let htmlResultado = "";
-    lineasOriginales.forEach(linea => {
+    lineasOriginales.forEach(function(linea) {
         let lineaAcordes = ""; let posicionLetraEfectiva = 0; let regex = /\[([^\]]+)\]/g; let coincidencia; let ultimoIndiceProcesado = 0;
         while ((coincidencia = regex.exec(linea)) !== null) {
-            let acorde = coincidencia; let indiceEnTextoConCorchetes = coincidencia.index;
+            let acorde = coincidencia[1]; let indiceEnTextoConCorchetes = coincidencia.index;
             let fragmentoPrevio = linea.substring(ultimoIndiceProcesado, indiceEnTextoConCorchetes).replace(/\[[^\]]+\]/g, '');
             posicionLetraEfectiva += fragmentoPrevio.length; let acordeTranspuesto = transponerAcorde(acorde, semitonosActuales);
             while (lineaAcordes.length < posicionLetraEfectiva) { lineaAcordes += " "; }
@@ -128,14 +153,14 @@ function renderizarCancion() {
         }
         let lineaLetra = linea.replace(/\[[^\]]+\]/g, '');
         if (lineaLetra.trim() === "" && lineaAcordes.trim() === "") { htmlResultado += "\n"; } 
-        else { htmlResultado += `<span class="chord-line">${lineaAcordes}</span><span class="lyric-line">${lineaLetra}</span>`; }
+        else { htmlResultado += '<span class="chord-line">' + lineaAcordes + '</span><span class="lyric-line">' + lineaLetra + '</span>'; }
     });
     document.getElementById('song-area').innerHTML = `<div class="song-header-actions"><div class="song-title">${cancionActual.titulo}</div><div class="action-tool-buttons"><button class="btn-tool btn-edit" onclick="iniciarEdicion()">✏️ Editar</button><button class="btn-tool btn-delete-song" onclick="eliminarCancionActual()">🗑️ Borrar</button><button class="btn-close-view" onclick="cerrarVisorCancion()">✕</button></div></div><div class="song-body">${htmlResultado}</div>`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function cerrarVisorCancion() { detenerScroll(); cancionActual = null; document.getElementById('scroll-btn').disabled = true; document.getElementById('scroll-speed').disabled = true; document.getElementById('tone-select').disabled = true; document.getElementById('tone-select').innerHTML = '<option value="0">Tono</option>'; cancelarFormulario(); }
 function toggleScroll() { if (estaHaciendoScroll) { detenerScroll(); } else { iniciarScroll(); } }
-function iniciarScroll() { estaHaciendoScroll = true; document.getElementById('scroll-btn').innerText = "⏸ Pausa"; document.getElementById('scroll-btn').style.background = "#ffb74d"; const velocidad = parseInt(document.getElementById('scroll-speed').value); let tiempoIntervalo = 60 / velocidad; scrollIntervalo = setInterval(() => { window.scrollBy(0, 1); if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) { detenerScroll(); } }, tiempoIntervalo); }
+function iniciarScroll() { estaHaciendoScroll = true; document.getElementById('scroll-btn').innerText = "⏸ Pausa"; document.getElementById('scroll-btn').style.background = "#ffb74d"; const velocidad = parseInt(document.getElementById('scroll-speed').value); let tiempoIntervalo = 60 / velocidad; scrollIntervalo = setInterval(function() { window.scrollBy(0, 1); if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) { detenerScroll(); } }, tiempoIntervalo); }
 function detenerScroll() { estaHaciendoScroll = false; clearInterval(scrollIntervalo); document.getElementById('scroll-btn').innerText = "▶ Scroll"; document.getElementById('scroll-btn').style.background = "#03dac6"; }
 function mostrarFormulario() { idEdicionActual = null; abrirInterfazFormulario("", "C", ""); }
 function iniciarEdicion() { if (!cancionActual) return; idEdicionActual = cancionActual.id; abrirInterfazFormulario(cancionActual.titulo, cancionActual.tonoOriginal, cancionActual.letra); }
@@ -159,7 +184,7 @@ function eliminarCancionActual() {
         db.collection("canciones").doc(cancionActual.id).delete().then(function() { alert("Eliminada."); cerrarVisorCancion(); }).catch(function(err) { alert("Error: " + err.message); });
     }
 }
-                    function cancelarFormulario() { document.getElementById('song-area').innerHTML = '<div class="empty-state">Toca el botón "☰ Menú" y elige una canción para empezar.</div>'; }
+function cancelarFormulario() { document.getElementById('song-area').innerHTML = '<div class="empty-state">Toca el botón "☰ Menú" y elige una canción para empezar.</div>'; }
 function agregarAlSetlist(id, e) { e.stopPropagation(); if (!setlistIds.includes(id)) { setlistIds.push(id); db.collection("setlists").doc("domingo").set({ ids: setlistIds }); } }
 function quitarDelSetlist(id, e) { e.stopPropagation(); setlistIds = setlistIds.filter(function(sid) { return sid !== id; }); db.collection("setlists").doc("domingo").set({ ids: setlistIds }); }
 function filtrarCanciones() {
@@ -168,15 +193,14 @@ function filtrarCanciones() {
 }
 function renderSetlistUI() {
     var setDiv = document.getElementById('setlist-container');
-    if (setlistIds.length === 0) { var par = document.createElement('p'); par.style.cssText = 'font-size:13px; color:#666; text-align:center; padding:20px;'; par.innerText = 'No hay canciones seleccionadas'; setDiv.innerHTML = ''; setDiv.appendChild(par); } 
+    if (setlistIds.length === 0) { setDiv.innerHTML = '<p style="font-size:13px; color:#666; text-align:center; padding:20px;">No hay canciones seleccionadas</p>'; } 
     else { setDiv.innerHTML = setlistIds.map(function(sid) { var cancion = canciones.find(function(c) { return c.id === sid; }); if (!cancion) return ''; return '<div class="setlist-item" onclick="cargarCancion(\'' + cancion.id + '\')"><span>' + cancion.titulo + '</span><button class="btn-remove" onclick="quitarDelSetlist(\'' + cancion.id + '\', event)">✕</button></div>'; }).join(''); }
 }
 db.collection("canciones").onSnapshot(function(snapshot) {
     canciones = []; snapshot.forEach(function(doc) { var datos = doc.data(); canciones.push({ id: doc.id, titulo: datos.titulo, tonoOriginal: datos.tonoOriginal, letra: datos.letra }); });
-    filtrarCanciones(); renderSetlistUI(); if (cancionActual) { var actualizada = canciones.find(c => c.id === cancionActual.id); if (actualizada) { cancionActual = actualizada; renderizarCancion(); } }
+    filtrarCanciones(); renderSetlistUI(); if (cancionActual) { var actualizada = canciones.find(function(c) { return c.id === cancionActual.id; }); if (actualizada) { cancionActual = actualizada; renderizarCancion(); } }
 });
 db.collection("setlists").doc("domingo").onSnapshot(function(doc) { if (doc.exists) { setlistIds = doc.data().ids || []; } else { setlistIds = []; } renderSetlistUI(); });
-if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 </script>
 </body>
 </html>
