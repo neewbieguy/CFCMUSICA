@@ -95,7 +95,7 @@ function cambiarPestaña(tipo) {
 }
 function transponerAcorde(acorde, semitonos) { let limpio = normalizarAcorde(acorde); let index = escala.indexOf(limpio); if (index === -1) return acorde; let nuevoIndex = (index + semitonos) % 12; if (nuevoIndex < 0) nuevoIndex += 12; return escala[nuevoIndex]; }
 auth.onAuthStateChanged((user) => {
-    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Admin"; } 
+    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Cerrar sesión"; document.getElementById('lock-btn').title = 'Logueado como ' + user.email; } 
     else { isAdminActual = false; document.body.classList.remove('is-admin'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
     if (cancionActual) renderizarCancion();
 });
