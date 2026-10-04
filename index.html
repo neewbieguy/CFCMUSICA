@@ -54,6 +54,8 @@
         .form-actions { display: flex; gap: 10px; margin-top: 10px; }
         .btn-save { background: #03dac6; color: #000; border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; }
         .btn-cancel { background: #cf6679; color: #fff; border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; }
+    body:not(.is-admin) #tab-rep, body:not(.is-admin) #content-rep { display: none !important; }
+    body:not(.is-admin) #content-set { display: flex !important; }
     @media (max-width: 600px) {
         .top-bar { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-areas: "menu . lock" "scroll speed tone"; gap: 6px; height: 92px; padding: 8px 10px; }
         .right-controls { display: contents; }
@@ -112,8 +114,8 @@ function cambiarPestaña(tipo) {
 }
 function transponerAcorde(acorde, semitonos) { let limpio = normalizarAcorde(acorde); let index = escala.indexOf(limpio); if (index === -1) return acorde; let nuevoIndex = (index + semitonos) % 12; if (nuevoIndex < 0) nuevoIndex += 12; return escala[nuevoIndex]; }
 auth.onAuthStateChanged((user) => {
-    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Salir"; document.getElementById('lock-btn').title = 'Logueado como ' + user.email; } 
-    else { isAdminActual = false; document.body.classList.remove('is-admin'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
+    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); cambiarPestaña('rep'); document.getElementById('lock-btn').innerText = "🔓 Salir"; document.getElementById('lock-btn').title = 'Logueado como ' + user.email; } 
+    else { isAdminActual = false; document.body.classList.remove('is-admin'); cambiarPestaña('set'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
     if (cancionActual) renderizarCancion();
 });
 
