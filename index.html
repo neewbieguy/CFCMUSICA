@@ -54,6 +54,20 @@
         .form-actions { display: flex; gap: 10px; margin-top: 10px; }
         .btn-save { background: #03dac6; color: #000; border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; }
         .btn-cancel { background: #cf6679; color: #fff; border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; }
+    @media (max-width: 600px) {
+        .top-bar { height: 56px; padding: 8px 10px; gap: 6px; }
+        .btn-menu { padding: 8px 10px; font-size: 13px; flex-shrink: 0; white-space: nowrap; }
+        .right-controls { gap: 5px; min-width: 0; }
+        .btn-scroll, .btn-admin-lock { padding: 7px 8px; font-size: 13px; white-space: nowrap; }
+        .tone-selector, .scroll-selector { padding: 6px 4px; font-size: 13px; }
+        .sidebar { top: 56px; height: calc(100dvh - 56px); width: 85%; max-width: 310px; }
+        .main-viewer { padding: 15px 12px 100px 12px; }
+        .song-header-actions { flex-wrap: wrap; gap: 8px; }
+        .song-title { font-size: 20px; flex: 1 1 100%; }
+        .action-tool-buttons { margin-left: auto; }
+        .song-body { font-size: 15px; }
+        .form-actions { flex-direction: column; }
+    }
     </style>
 </head>
 <body>
@@ -95,7 +109,7 @@ function cambiarPestaña(tipo) {
 }
 function transponerAcorde(acorde, semitonos) { let limpio = normalizarAcorde(acorde); let index = escala.indexOf(limpio); if (index === -1) return acorde; let nuevoIndex = (index + semitonos) % 12; if (nuevoIndex < 0) nuevoIndex += 12; return escala[nuevoIndex]; }
 auth.onAuthStateChanged((user) => {
-    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Cerrar sesión"; document.getElementById('lock-btn').title = 'Logueado como ' + user.email; } 
+    if (user) { isAdminActual = true; document.body.classList.add('is-admin'); document.getElementById('lock-btn').innerText = "🔓 Salir"; document.getElementById('lock-btn').title = 'Logueado como ' + user.email; } 
     else { isAdminActual = false; document.body.classList.remove('is-admin'); document.getElementById('lock-btn').innerText = "⚙️ Login"; }
     if (cancionActual) renderizarCancion();
 });
