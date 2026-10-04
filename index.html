@@ -128,7 +128,7 @@ function solicitarAccesoAdmin() {
     }
 }
 
-function cargarCancion(id) {
+function cargarCancion(id) { const sbMenu = document.getElementById('sidebar-menu'); if (sbMenu && sbMenu.classList.contains('active')) toggleMenu();
     detenerScroll(); cancionActual = canciones.find(c => c.id === id); if (!cancionActual) { cancelarFormulario(); return; } semitonosActuales = 0;
     document.getElementById('scroll-btn').disabled = false; document.getElementById('scroll-speed').disabled = false;
     const selector = document.getElementById('tone-select'); selector.disabled = false; selector.innerHTML = '';
