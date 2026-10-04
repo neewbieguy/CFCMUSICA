@@ -55,12 +55,15 @@
         .btn-save { background: #03dac6; color: #000; border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; }
         .btn-cancel { background: #cf6679; color: #fff; border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; }
     @media (max-width: 600px) {
-        .top-bar { height: 56px; padding: 8px 10px; gap: 6px; }
-        .btn-menu { padding: 8px 10px; font-size: 13px; flex-shrink: 0; white-space: nowrap; }
-        .right-controls { gap: 5px; min-width: 0; }
-        .btn-scroll, .btn-admin-lock { padding: 7px 8px; font-size: 13px; white-space: nowrap; }
+        .top-bar { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-areas: "menu . lock" "scroll speed tone"; gap: 6px; height: 92px; padding: 8px 10px; }
+        .right-controls { display: contents; }
+        .btn-menu { grid-area: menu; justify-self: start; padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+        #lock-btn { grid-area: lock; justify-self: end; }
+        #scroll-btn { grid-area: scroll; } #scroll-speed { grid-area: speed; } #tone-select { grid-area: tone; }
+        .btn-scroll, .btn-admin-lock { padding: 7px 10px; font-size: 13px; white-space: nowrap; }
+        .btn-scroll, .tone-selector, .scroll-selector { width: 100%; min-width: 0; }
         .tone-selector, .scroll-selector { padding: 6px 4px; font-size: 13px; }
-        .sidebar { top: 56px; height: calc(100dvh - 56px); width: 85%; max-width: 310px; }
+        .sidebar { top: 92px; height: calc(100dvh - 92px); width: 85%; max-width: 310px; }
         .main-viewer { padding: 15px 12px 100px 12px; }
         .song-header-actions { flex-wrap: wrap; gap: 8px; }
         .song-title { font-size: 20px; flex: 1 1 100%; }
